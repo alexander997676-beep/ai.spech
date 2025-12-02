@@ -1,432 +1,303 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>mob i - Latest & Search</title>
-    <style>
-        /* --- CSS STYLES --- */
-        :root {
-            --primary: #00e5ff; /* Cyan Blue */
-            --bg: #121212;
-            --card-bg: #1e1e1e;
-            --text-main: #ffffff;
-            --text-sec: #b3b3b3;
-        }
-
-        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-
-        body {
-            background-color: var(--bg);
-            color: var(--text-main);
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-        }
-
-        /* Navbar */
-        nav {
-            background: rgba(30, 30, 30, 0.95);
-            padding: 15px 5%;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-bottom: 1px solid #333;
-            position: sticky;
-            top: 0;
-            z-index: 100;
-        }
-
-        .logo { font-size: 1.8rem; font-weight: 800; }
-        .logo span { color: var(--primary); }
-
-        .nav-links button {
-            background: none;
-            border: none;
-            color: var(--text-main);
-            font-size: 1rem;
-            margin-left: 20px;
-            cursor: pointer;
-            padding: 5px 10px;
-            font-weight: 500;
-            transition: 0.3s;
-        }
-
-        .nav-links button.active, .nav-links button:hover {
-            color: var(--primary);
-        }
-
-        /* Sections */
-        .section {
-            display: none; /* Hidden by default */
-            padding: 20px 5%;
-            width: 100%;
-            max-width: 1400px;
-            margin: 0 auto;
-            animation: fadeIn 0.5s ease;
-        }
-        .section.active { display: block; }
-
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-
-        /* Titles */
-        .section-title {
-            font-size: 1.5rem;
-            margin: 20px 0;
-            border-left: 4px solid var(--primary);
-            padding-left: 15px;
-        }
-
-        /* Search Box Design */
-        .search-container {
-            display: flex;
-            justify-content: center;
-            margin-bottom: 30px;
-            margin-top: 20px;
-        }
-
-        .input-group {
-            display: flex;
-            width: 100%;
-            max-width: 600px;
-            position: relative;
-        }
-
-        input[type="text"] {
-            width: 100%;
-            padding: 15px 20px;
-            border-radius: 50px;
-            border: 2px solid #333;
-            background: var(--card-bg);
-            color: white;
-            font-size: 1rem;
-            outline: none;
-            padding-right: 100px; /* Space for button */
-        }
-
-        input[type="text"]:focus { border-color: var(--primary); }
-
-        button#search-btn {
-            position: absolute;
-            right: 5px;
-            top: 5px;
-            bottom: 5px;
-            padding: 0 25px;
-            border-radius: 40px;
-            border: none;
-            background: var(--primary);
-            color: #000;
-            font-weight: bold;
-            cursor: pointer;
-            transition: 0.2s;
-        }
-
-        button#search-btn:active { transform: scale(0.95); }
-
-        /* Grid System */
-        .grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-            gap: 20px;
-        }
-
-        /* Card Design */
-        .card {
-            background: var(--card-bg);
-            border-radius: 12px;
-            overflow: hidden;
-            border: 1px solid #333;
-            cursor: pointer;
-            transition: transform 0.3s;
-            display: flex;
-            flex-direction: column;
-        }
-
-        .card:hover {
-            transform: translateY(-5px);
-            border-color: var(--primary);
-            box-shadow: 0 5px 15px rgba(0, 229, 255, 0.1);
-        }
-
-        .card img {
-            width: 100%;
-            height: 220px;
-            object-fit: contain;
-            background: #fff;
-            padding: 15px;
-        }
-
-        .card-body { padding: 15px; text-align: center; }
-        .card-title { font-weight: bold; font-size: 1rem; margin-bottom: 5px; }
-        .card-desc { font-size: 0.8rem; color: var(--text-sec); display: none; } /* Hidden in grid, shown in popup */
-
-        /* Loader */
-        .loader {
-            display: none;
-            border: 4px solid #333;
-            border-top: 4px solid var(--primary);
-            border-radius: 50%;
-            width: 40px;
-            height: 40px;
-            animation: spin 1s linear infinite;
-            margin: 30px auto;
-        }
-        @keyframes spin { 100% { transform: rotate(360deg); } }
-
-        /* Modal (Popup) */
-        .modal {
-            display: none;
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.9);
-            z-index: 1000;
-            justify-content: center;
-            align-items: center;
-            padding: 20px;
-        }
-
-        .modal-content {
-            background: var(--card-bg);
-            width: 100%;
-            max-width: 500px;
-            border-radius: 15px;
-            padding: 20px;
-            border: 1px solid var(--primary);
-            position: relative;
-            max-height: 90vh;
-            overflow-y: auto;
-        }
-
-        .close-btn {
-            position: absolute;
-            top: 15px; right: 20px;
-            font-size: 1.5rem;
-            cursor: pointer;
-            color: #fff;
-        }
-
-        .modal-specs ul { margin-top: 15px; list-style: none; }
-        .modal-specs li {
-            padding: 8px 0;
-            border-bottom: 1px solid #333;
-            color: var(--text-sec);
-            font-size: 0.9rem;
-        }
-        .modal-specs strong { color: var(--primary); display: block; }
-
-    </style>
-</head>
-<body>
-
-    <!-- Navigation -->
-    <nav>
-        <div class="logo">mob <span>i</span></div>
-        <div class="nav-links">
-            <button id="btn-home" onclick="showPage('home')" class="active">Home</button>
-            <button id="btn-search" onclick="showPage('search')">Search</button>
-        </div>
-    </nav>
-
-    <!-- 1. HOME SECTION (Trending/Latest) -->
-    <section id="home-section" class="section active">
-        <h2 class="section-title">🔥 Trending Now</h2>
-        <p style="color: gray; margin-bottom: 20px;">Top latest mobile phones</p>
-        
-        <!-- Loader for Home -->
-        <div id="home-loader" class="loader"></div>
-        
-        <div class="grid" id="home-grid">
-            <!-- Trending mobiles will load here automatically -->
-        </div>
-    </section>
-
-    <!-- 2. SEARCH SECTION -->
-    <section id="search-section" class="section">
-        <div class="search-container">
-            <div class="input-group">
-                <input type="text" id="search-input" placeholder="Search mobile (e.g. Pixel 8, iPhone 15)...">
-                <button id="search-btn" onclick="performSearch()">Search</button>
-            </div>
-        </div>
-
-        <!-- Loader for Search -->
-        <div id="search-loader" class="loader"></div>
-
-        <div class="grid" id="search-grid">
-            <!-- Search results will appear here -->
-        </div>
-    </section>
-
-    <!-- 3. DETAILS MODAL -->
-    <div class="modal" id="details-modal">
-        <div class="modal-content">
-            <span class="close-btn" onclick="closeModal()">&times;</span>
-            <div style="text-align: center;">
-                <img id="modal-img" src="" style="height: 180px; margin-bottom: 10px;">
-                <h2 id="modal-title"></h2>
-            </div>
-            <div class="modal-specs" id="modal-specs"></div>
-        </div>
-    </div>
-
-    <script>
-        // API Base URL
-        const API_URL = "https://api.xyro.site/search/gsmarena";
-
-        // ---- PAGE NAVIGATION LOGIC ----
-        function showPage(pageId) {
-            // Hide all sections
-            document.querySelectorAll('.section').forEach(sec => sec.classList.remove('active'));
-            document.querySelectorAll('.nav-links button').forEach(btn => btn.classList.remove('active'));
-
-            // Show selected section
-            if (pageId === 'home') {
-                document.getElementById('home-section').classList.add('active');
-                document.getElementById('btn-home').classList.add('active');
-            } else {
-                document.getElementById('search-section').classList.add('active');
-                document.getElementById('btn-search').classList.add('active');
-                // Focus on input automatically
-                setTimeout(() => document.getElementById('search-input').focus(), 100);
+ <!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>⫷𝐅𝐀𝐊 𝐎𝐅𝐅𝐈𝐂𝐈𝐀𝐋⫸ - AI TTS</title>
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+        <style>
+            :root {
+                --primary-color: #007cf0;
+                --background-color: #121212;
+                --surface-color: #1e1e1e;
+                --text-color: #e0e0e0;
+                --text-muted-color: #888;
+                --border-color: #333;
+                --shadow-color: rgba(0, 0, 0, 0.5);
             }
-        }
-
-        // ---- HOME PAGE LOGIC (AUTO LOAD) ----
-        // Jaise hi page load hoga, ye chalega
-        window.addEventListener('DOMContentLoaded', () => {
-            loadHomeData();
-        });
-
-        async function loadHomeData() {
-            const grid = document.getElementById('home-grid');
-            const loader = document.getElementById('home-loader');
-
-            loader.style.display = 'block';
-
-            // Kyunki ye API "Latest" ka direct option nahi deti,
-            // Hum "Samsung" ya "iPhone" search karke trending phones dikhayenge
-            // Taaki Home page khali na rahe.
-            try {
-                // Default search for Home Page (You can change "Samsung" to "2024" or "Apple")
-                const response = await fetch(`${API_URL}?q=Samsung`);
-                const json = await response.json();
-
-                loader.style.display = 'none';
-
-                if (json.status && json.data) {
-                    // Sirf pehle 8 phones dikhayenge home page par
-                    const topPhones = json.data.slice(0, 10);
-                    renderGrid(topPhones, grid);
-                } else {
-                    grid.innerHTML = "<p>Could not load trending phones.</p>";
-                }
-            } catch (error) {
-                console.error("Home Load Error:", error);
-                loader.style.display = 'none';
-                grid.innerHTML = "<p>Check internet connection.</p>";
+            body {
+                font-family: 'Inter', sans-serif;
+                background-color: var(--background-color);
+                color: var(--text-color);
+                margin: 0;
+                padding: 20px;
             }
-        }
-
-        // ---- SEARCH LOGIC (FIXED) ----
-        async function performSearch() {
-            const query = document.getElementById('search-input').value.trim();
-            const grid = document.getElementById('search-grid');
-            const loader = document.getElementById('search-loader');
-
-            if (!query) return; // Empty search ko roko
-
-            // UI Reset
-            grid.innerHTML = "";
-            loader.style.display = 'block';
-
-            try {
-                // API Call
-                const response = await fetch(`${API_URL}?q=${encodeURIComponent(query)}`);
-                const json = await response.json();
-
-                loader.style.display = 'none';
-
-                if (json.status && json.data && json.data.length > 0) {
-                    renderGrid(json.data, grid);
-                } else {
-                    grid.innerHTML = `<p style="text-align:center; width:100%; margin-top:20px;">No results found for "${query}"</p>`;
-                }
-
-            } catch (error) {
-                console.error("Search Error:", error);
-                loader.style.display = 'none';
-                grid.innerHTML = `<p style="text-align:center; color:red; width:100%;">API Error. Please try again.</p>`;
+            .container {
+                max-width: 1000px;
+                margin: 20px auto;
+                display: flex;
+                flex-direction: column;
+                gap: 30px;
             }
-        }
+            .header {
+                text-align: center;
+            }
+            .header h1 {
+                font-weight: 700;
+                font-size: 2.8rem;
+                color: var(--primary-color);
+                text-shadow: 0 0 15px rgba(0, 124, 240, 0.5);
+            }
+            .main-engine {
+                background: var(--surface-color);
+                border-radius: 16px;
+                padding: 30px;
+                box-shadow: 0 8px 30px var(--shadow-color);
+                border: 1px solid var(--border-color);
+            }
+            textarea {
+                width: 100%;
+                min-height: 100px;
+                background: var(--background-color);
+                border: 1px solid var(--border-color);
+                color: var(--text-color);
+                border-radius: 12px;
+                padding: 15px;
+                font-size: 1.1rem;
+                resize: vertical;
+                transition: border-color 0.3s, box-shadow 0.3s;
+            }
+            textarea:focus {
+                outline: none;
+                border-color: var(--primary-color);
+                box-shadow: 0 0 10px rgba(0, 124, 240, 0.4);
+            }
+            .audio-controls { margin-top: 20px; }
+            .output-area {
+                display: flex;
+                flex-wrap: wrap;
+                align-items: center;
+                gap: 15px;
+                min-height: 50px;
+                margin-top: 20px;
+            }
+            #generate-btn, .download-btn {
+                background-color: var(--primary-color);
+                color: white;
+                border: none;
+                border-radius: 10px;
+                padding: 12px 25px;
+                font-size: 1rem;
+                font-weight: 600;
+                cursor: pointer;
+                transition: background-color 0.3s, transform 0.2s;
+            }
+            #generate-btn:hover, .download-btn:hover {
+                background-color: #005bb5;
+                transform: translateY(-2px);
+            }
+            #generate-btn:disabled {
+                background-color: #555;
+                cursor: not-allowed;
+            }
+            audio {
+                flex-grow: 1;
+                max-width: 400px;
+            }
+            .error-message {
+                color: #ff8a80;
+                padding: 15px;
+                border: 1px solid #ff8a80;
+                border-radius: 10px;
+                background-color: rgba(255, 138, 128, 0.1);
+            }
+            .error-message a { color: #80d8ff; }
+            .voice-selection h2 {
+                text-align: center;
+                margin-bottom: 10px;
+            }
+            .filter-buttons {
+                display: flex;
+                justify-content: center;
+                gap: 10px;
+                margin-bottom: 20px;
+            }
+            .filter-btn {
+                background: var(--surface-color);
+                border: 1px solid var(--border-color);
+                color: var(--text-muted-color);
+                padding: 8px 16px;
+                border-radius: 8px;
+                cursor: pointer;
+                transition: all 0.3s;
+            }
+            .filter-btn:hover { background: #333; color: var(--text-color); }
+            .filter-btn.active {
+                background: var(--primary-color);
+                color: white;
+                border-color: var(--primary-color);
+            }
+            .voice-gallery {
+                display: grid;
+                grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+                gap: 20px;
+            }
+            .voice-card {
+                background: var(--surface-color);
+                border: 1px solid var(--border-color);
+                border-radius: 12px;
+                padding: 20px;
+                cursor: pointer;
+                transition: transform 0.3s, box-shadow 0.3s, border-color 0.3s;
+            }
+            .voice-card:hover {
+                transform: translateY(-5px);
+                box-shadow: 0 10px 20px var(--shadow-color);
+            }
+            .voice-card.selected {
+                border-color: var(--primary-color);
+                box-shadow: 0 0 15px rgba(0, 124, 240, 0.4);
+            }
+            .voice-card h3 { margin: 0 0 5px 0; font-size: 1.1rem; }
+            .voice-card p { margin: 0; font-size: 0.9rem; color: var(--text-muted-color); }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <header class="header">
+                <h1>⫷𝐅𝐀𝐊 𝐎𝐅𝐅𝐈𝐂𝐈𝐀𝐋⫸</h1>
+            </header>
 
-        // ---- COMMON RENDER FUNCTION ----
-        function renderGrid(data, container) {
-            container.innerHTML = ""; // Clear old data
-            data.forEach(phone => {
-                const card = document.createElement('div');
-                card.className = 'card';
-                card.onclick = () => openModal(phone); // Click to open details
+            <main class="main-engine">
+                <textarea id="text-input" placeholder="Enter text here..."></textarea>
+                <div class="audio-controls">
+                    <button id="generate-btn">Generate Audio</button>
+                    <div class="output-area" id="output-area"></div>
+                </div>
+            </main>
 
-                card.innerHTML = `
-                    <img src="${phone.thumbnail}" alt="${phone.name}" onerror="this.src='https://via.placeholder.com/150?text=No+Img'">
-                    <div class="card-body">
-                        <div class="card-title">${phone.name}</div>
-                    </div>
-                `;
-                container.appendChild(card);
-            });
-        }
+            <section class="voice-selection">
+                <h2>Choose a Voice</h2>
+                <div class="filter-buttons" id="filter-buttons">
+                    <button class="filter-btn active" data-lang="All">All</button>
+                    <button class="filter-btn" data-lang="English">English</button>
+                    <button class="filter-btn" data-lang="Urdu">Urdu</button>
+                </div>
+                <div class="voice-gallery" id="voice-gallery"></div>
+            </section>
+        </div>
 
-        // ---- POPUP / MODAL LOGIC ----
-        function openModal(phone) {
-            const modal = document.getElementById('details-modal');
-            const specsContainer = document.getElementById('modal-specs');
+        <script>
+            document.addEventListener('DOMContentLoaded', () => {
+                const voiceGallery = document.getElementById('voice-gallery');
+                const textInput = document.getElementById('text-input');
+                const generateBtn = document.getElementById('generate-btn');
+                const outputArea = document.getElementById('output-area');
+                const filterButtons = document.getElementById('filter-buttons');
 
-            document.getElementById('modal-title').innerText = phone.name;
-            document.getElementById('modal-img').src = phone.thumbnail;
+                const voicePresets = [{"id":"v2/en_speaker_6","name":"Nathan","language":"English","description":"Male, Calm & Clear","isDefault":true},{"id":"v2/en_speaker_9","name":"Luna","language":"English","description":"Female, Expressive"},{"id":"v2/en_speaker_1","name":"Arthur","language":"English","description":"Male, Deep & Warm"},{"id":"v2/en_speaker_4","name":"Ivy","language":"English","description":"Female, Gentle"},{"id":"v2/en_speaker_2","name":"Oscar","language":"English","description":"Male, Formal"},{"id":"v2/ur_speaker_0","name":"Zara","language":"Urdu","description":"Female, Gentle & Clear"},{"id":"v2/ur_speaker_1","name":"Bilal","language":"Urdu","description":"Male, Professional"},{"id":"v2/ur_speaker_2","name":"Samira","language":"Urdu","description":"Female, Bright"},{"id":"v2/fr_speaker_1","name":"Chloé","language":"French","description":"Female, Cheerful"},{"id":"v2/hi_speaker_0","name":"Priya","language":"Hindi","description":"Female, Bright"},{"id":"v2/zh_speaker_4","name":"Lin","language":"Chinese","description":"Female, Friendly"},{"id":"v2/es_speaker_1","name":"Sofia","language":"Spanish","description":"Female, Expressive"}];
+                let selectedVoiceId = 'v2/en_speaker_6';
+                
+                const renderVoices = (filter = 'All') => {
+                    voiceGallery.innerHTML = '';
+                    const filteredVoices = filter === 'All' ? voicePresets : voicePresets.filter(v => v.language === filter);
+                    
+                    filteredVoices.forEach(voice => {
+                        const card = document.createElement('div');
+                        card.className = 'voice-card';
+                        card.dataset.voiceId = voice.id;
+                        card.innerHTML = `<h3>${voice.name}</h3><p>${voice.language} - ${voice.description}</p>`;
+                        
+                        if (voice.id === selectedVoiceId) {
+                            card.classList.add('selected');
+                        }
 
-            // Description Parsing (Sahi format mein)
-            specsContainer.innerHTML = "";
-            const ul = document.createElement('ul');
+                        card.addEventListener('click', () => {
+                            const currentSelected = document.querySelector('.voice-card.selected');
+                            if (currentSelected) currentSelected.classList.remove('selected');
+                            card.classList.add('selected');
+                            selectedVoiceId = voice.id;
+                        });
+                        voiceGallery.appendChild(card);
+                    });
+                };
 
-            let desc = phone.description || "Details not available";
-            // Cleaning text
-            desc = desc.replace("Android smartphone.", "").replace("Features", "");
-            
-            // Splitting logic
-            let items = desc.split(/,|\./); // Comma ya full stop se split karega
-
-            items.forEach(item => {
-                let text = item.trim();
-                if (text.length > 2) {
-                    let li = document.createElement('li');
-                    // Highlight specs like GB, mAh, inches
-                    if (text.match(/\d/)) {
-                        li.innerHTML = `<strong>•</strong> ${text}`;
-                        li.style.color = "#fff"; // Brighten text with numbers
-                    } else {
-                        li.innerText = text;
+                filterButtons.addEventListener('click', (e) => {
+                    if (e.target.tagName === 'BUTTON') {
+                        document.querySelector('.filter-btn.active').classList.remove('active');
+                        e.target.classList.add('active');
+                        renderVoices(e.target.dataset.lang);
                     }
-                    ul.appendChild(li);
-                }
+                });
+                
+                textInput.addEventListener('input', () => {
+                    // Smart detection for Urdu script
+                    const urduRegex = /[\u0600-\u06FF]/;
+                    if (urduRegex.test(textInput.value)) {
+                        const urduFilter = document.querySelector('.filter-btn[data-lang="Urdu"]');
+                        if (!urduFilter.classList.contains('active')) {
+                            document.querySelector('.filter-btn.active').classList.remove('active');
+                            urduFilter.classList.add('active');
+                            renderVoices('Urdu');
+                            // Auto-select the first Urdu voice if not already on an Urdu voice
+                            const isUrduSelected = voicePresets.find(v => v.id === selectedVoiceId)?.language === 'Urdu';
+                            if (!isUrduSelected) {
+                                const firstUrduVoice = voicePresets.find(v => v.language === 'Urdu');
+                                if (firstUrduVoice) {
+                                    selectedVoiceId = firstUrduVoice.id;
+                                    document.querySelector('.voice-card.selected')?.classList.remove('selected');
+                                    document.querySelector(`.voice-card[data-voice-id="${firstUrduVoice.id}"]`)?.classList.add('selected');
+                                }
+                            }
+                        }
+                    }
+                });
+
+                generateBtn.addEventListener('click', async () => {
+                    const text = textInput.value.trim();
+                    if (!text) {
+                        alert('Please enter some text.');
+                        return;
+                    }
+
+                    generateBtn.disabled = true;
+                    generateBtn.textContent = 'Generating...';
+                    outputArea.innerHTML = '';
+
+                    try {
+                        const response = await fetch('/api/generate', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ text, voice_preset: selectedVoiceId })
+                        });
+
+                        if (response.ok) {
+                            const audioBlob = await response.blob();
+                            const audioUrl = URL.createObjectURL(audioBlob);
+
+                            const audioPlayer = new Audio(audioUrl);
+                            audioPlayer.controls = true;
+                            audioPlayer.autoplay = true;
+
+                            const downloadBtn = document.createElement('a');
+                            downloadBtn.href = audioUrl;
+                            downloadBtn.download = 'fak_official_tts.wav';
+                            downloadBtn.className = 'download-btn';
+                            downloadBtn.textContent = 'Download Audio';
+                            
+                            outputArea.appendChild(audioPlayer);
+                            outputArea.appendChild(downloadBtn);
+                        } else {
+                            throw new Error('Failed to generate audio from API.');
+                        }
+                    } catch (error) {
+                        outputArea.innerHTML = `
+                            <div class="error-message">
+                                <p>System under Development. Please try again later.</p>
+                                <p>For support, join our <a href="https://whatsapp.com/channel/0029Vb2y2umF6sn16F6Zm20k" target="_blank">WhatsApp Channel</a>.</p>
+                            </div>
+                        `;
+                    } finally {
+                        generateBtn.disabled = false;
+                        generateBtn.textContent = 'Generate Audio';
+                    }
+                });
+
+                // Initial render
+                renderVoices();
             });
-
-            specsContainer.appendChild(ul);
-            modal.style.display = "flex";
-        }
-
-        function closeModal() {
-            document.getElementById('details-modal').style.display = "none";
-        }
-
-        // ---- ENTER KEY EVENT LISTENER ----
-        // Ye code ensure karega ki Enter dabane par search ho
-        document.getElementById('search-input').addEventListener('keypress', function (e) {
-            if (e.key === 'Enter') {
-                performSearch();
-            }
-        });
-
-    </script>
-</body>
-</html>
+        </script>
+    </body>
+    </html>
